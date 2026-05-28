@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тест на поиск иконок</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    .wrap {
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 20px;
+      gap: 20px;
+      font-family: system-ui, sans-serif;
+    }
+    .progress-row { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 480px; }
+    .progress-bar-bg { flex: 1; height: 4px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: #aaa; border-radius: 4px; transition: width 0.3s; }
+    .progress-label { font-size: 13px; color: #999; min-width: 40px; text-align: right; }
+
+    .box {
+      width: 100%; max-width: 480px; background: #fff; border: 1px solid #e0e0e0;
+      border-radius: 14px; padding: 24px;
+    }
+    .rtest-grid {
+      display: grid;
+      grid-template-columns: repeat(5, auto);
+      width: 100%;
+      max-width: 720px;
+      justify-content: center;
+      margin: 0 auto;
+    }
+    .rtest-btn {
+      aspect-ratio: 1;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s;
+      color: #555;
+      width: 70px;
+      height: 70px;
+    }
+    .rtest-btn i { font-size: 26px; }
+    .rtest-btn:hover { background: #f0f0f0; border-color: #ccc; }
+    .rtest-btn:active { background: #e8e8e8; transform: scale(0.93); }
+
+    .scale-question { margin-bottom: 20px; }
+    .scale-label { font-size: 14.5px; line-height: 1.4; margin-bottom: 8px; }
+    .scale-values { display: flex; justify-content: space-between; font-size: 12px; color: #777; margin-top: 4px; }
+
+    button.continue-btn {
+      padding: 12px 32px; background: #333; color: #fff; border: none;
+      border-radius: 10px; font-size: 15px; cursor: pointer; align-self: center;
+      margin-top: 8px;
+    }
+    button.continue-btn:hover { background: #555; }
+  </style>
+</head>
+<body>
+
+<div class="wrap" id="wrap">
+
+  <!-- Приветственный экран -->
+  <div class="box show" id="welcomeBox">
+    <div style="font-size:18px;font-weight:600;color:#333;margin-bottom:16px;">Спасибо, что проходите тест!</div>
+    <div style="font-size:14px;color:#555;line-height:1.65;">
+      <p>Будет фиксироваться <strong>время ответа</strong> на каждый вопрос, поэтому просьба <strong>не отвлекаться</strong>, но отвечать в комфортном темпе.</p>
+      <p>Если вы случайно нажали не на ту кнопку — это связано только с особенностями дизайна. Тест просто запишет это как ошибку, ничего страшного.</p>
+      <p>Перед каждым вариантом будет <strong>1 пробное задание</strong>, а затем 15 основных.</p>
+    </div>
+    <button class="continue-btn" onclick="startTest()">Начать тест</button>
+  </div>
+
+  <!-- Основной тест -->
+  <div class="progress-row" id="progressRow" style="display:none">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-label" id="progressLabel">0 / 15</div>
+  </div>
+
+  <div class="box task-box" id="taskBox" style="display:none">
+    <div class="task-label" id="taskLabel">Найдите иконку</div>
+    <div class="task-text" id="taskText">—</div>
+  </div>
+
+  <div class="rtest-grid" id="grid" style="display:none"></div>
+
+  <!-- Результаты + NASA-TLX -->
+  <div class="box results-box" id="resultsBox" style="display:none">
+    <h3 style="text-align:center;margin-bottom:16px;">Результаты варианта <span id="variantTitle">1</span></h3>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px;">
+      <div style="text-align:center"><div id="rCorrect" style="font-size:26px;font-weight:600;color:#333">—</div><div style="font-size:12px;color:#666">Верных</div></div>
+      <div style="text-align:center"><div id="rAccuracy" style="font-size:26px;font-weight:600;color:#333">—</div><div style="font-size:12px;color:#666">Точность</div></div>
+      <div style="text-align:center"><div id="rAvgTime" style="font-size:26px;font-weight:600;color:#333">—</div><div style="font-size:12px;color:#666">Сред. время</div></div>
+    </div>
+
+    <h4 style="margin:20px 0 12px 0;">Оцените этот вариант интерфейса</h4>
+    <div id="questionsContainer"></div>
+
+    <button class="continue-btn" onclick="nextStep()">Продолжить</button>
+  </div>
+
+  <!-- Финальный экран -->
+  <div class="box" id="finalBox" style="display:none; text-align:center;">
+    <div style="font-size:20px;font-weight:600;margin-bottom:16px;">Спасибо за участие!</div>
+    <p style="color:#555;line-height:1.6;">Ваши результаты успешно сохранены.</p>
+    <button class="continue-btn" onclick="location.reload()">Пройти тест ещё раз</button>
+  </div>
+
+</div>
+
+<script>
+// ================== НАСТРОЙКИ ==================
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwM5WVUvXJA4pmg7vQ_mo2-Ov_UwaJ9qTka00eegAXROB3j2gxGaIGx8K8Qgzg76oxAGA/exec";
+
+const TOTAL = 15;
+let userId = '';
+let screenSize = '';
+let variantsOrder = [];
+let currentVariantIndex = 0;
+let currentTestData = {};
+let isPractice = false;           // ← Новый флаг
+
+const ICONS = [ /* ... тот же список ... */ 
+  { icon: "ti-home",     label: "дом" }, { icon: "ti-search",   label: "поиск" },
+  { icon: "ti-settings", label: "настройки" }, { icon: "ti-user",     label: "профиль" },
+  { icon: "ti-bell",     label: "уведомление" }, { icon: "ti-mail",     label: "письмо" },
+  { icon: "ti-heart",    label: "лайк" }, { icon: "ti-star",     label: "избранное" },
+  { icon: "ti-trash",    label: "корзину" }, { icon: "ti-edit",     label: "редактирование" },
+  { icon: "ti-download", label: "загрузку" }, { icon: "ti-plus",     label: "добавить" },
+  { icon: "ti-x",        label: "закрыть" }, { icon: "ti-check",    label: "подтверждение" },
+  { icon: "ti-calendar", label: "календарь" }, { icon: "ti-clock",    label: "время" },
+  { icon: "ti-lock",     label: "замок" }, { icon: "ti-eye",      label: "просмотр" },
+  { icon: "ti-camera",   label: "камеру" }, { icon: "ti-upload",   label: "отправку" }
+];
+
+let sequence, current, correctArr, timeArr, lastTs, locked;
+
+// =============== УТИЛИТЫ ===============
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function generateUserId() {
+  return 'U_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+}
+
+function applyGap() {
+  const grid = document.getElementById("grid");
+  const baseBtnSize = 70;
+  const isDense = variantsOrder[currentVariantIndex] === 2;
+  const gap = isDense ? Math.round(baseBtnSize * 0.1) : Math.round(baseBtnSize * 1.0);
+  
+  const totalWidth = 5 * baseBtnSize + 4 * gap;
+  grid.style.maxWidth = Math.min(totalWidth + 40, 720) + "px";
+  grid.style.gap = gap + "px";
+  grid.style.padding = (gap * 0.8) + "px";
+
+  document.querySelectorAll('.rtest-btn').forEach(btn => {
+    btn.style.width = baseBtnSize + "px";
+    btn.style.height = baseBtnSize + "px";
+  });
+}
+
+function renderGrid() {
+  const grid = document.getElementById("grid");
+  const order = shuffle([...Array(20).keys()]);
+  const btns = grid.querySelectorAll(".rtest-btn");
+  order.forEach((iconIdx, pos) => {
+    btns[pos].dataset.icon = ICONS[iconIdx].icon;
+    btns[pos].querySelector("i").className = `ti ${ICONS[iconIdx].icon}`;
+  });
+}
+
+// =============== ТЕСТ ===============
+function setTask(idx) {
+  const t = sequence[idx];
+  document.getElementById("taskText").innerHTML = 
+    `Нажмите <i class="ti ${t.icon}" style="font-size:20px;vertical-align:-3px;margin:0 3px"></i> <strong>${t.label}</strong>`;
+  
+  const label = document.getElementById("taskLabel");
+  label.textContent = isPractice ? "Пробное задание" : "Найдите иконку";
+  
+  document.getElementById("progressFill").style.width = isPractice ? "0%" : (idx / TOTAL * 100) + "%";
+  document.getElementById("progressLabel").textContent = isPractice ? "Пробное" : `${idx} / ${TOTAL}`;
+}
+
+function handleClick(btn) {
+  if (locked) return;
+  locked = true;
+
+  const now = Date.now();
+  if (lastTs !== null) timeArr.push(now - lastTs);
+  lastTs = now;
+
+  const isCorrect = btn.dataset.icon === sequence[current].icon;
+  if (!isPractice) correctArr.push(isCorrect ? 1 : 0);
+
+  current++;
+
+  if (isPractice) {
+    // После пробного сразу начинаем основные 15
+    isPractice = false;
+    initMainTest();
+  } else if (current >= TOTAL) {
+    showResultsAndQuestionnaire();
+  } else {
+    setTask(current);
+    renderGrid();
+    locked = false;
+  }
+}
+
+function initPracticeTrial() {
+  isPractice = true;
+  sequence = shuffle([...ICONS]).slice(0, 1); // только 1 задание
+  current = 0;
+  lastTs = null;
+  locked = false;
+
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  for (let i = 0; i < 20; i++) {
+    const btn = document.createElement("button");
+    btn.className = "rtest-btn";
+    btn.innerHTML = `<i class="ti ti-home"></i>`;
+    btn.addEventListener("click", () => handleClick(btn));
+    grid.appendChild(btn);
+  }
+
+  applyGap();
+  setTask(0);
+  renderGrid();
+}
+
+function initMainTest() {
+  sequence = shuffle([...ICONS]).slice(0, TOTAL);
+  current = 0;
+  correctArr = [];
+  timeArr = [];
+  lastTs = null;
+  locked = false;
+
+  setTask(0);
+  renderGrid();
+}
+
+// =============== ОСНОВНОЙ ПОТОК ===============
+function startTest() {
+  userId = generateUserId();
+  screenSize = `${window.innerWidth}×${window.innerHeight}`;
+  variantsOrder = shuffle([1, 2]);
+  currentVariantIndex = 0;
+
+  document.getElementById("welcomeBox").style.display = "none";
+  document.getElementById("progressRow").style.display = "flex";
+  document.getElementById("taskBox").style.display = "block";
+  document.getElementById("grid").style.display = "grid";
+
+  startCurrentVariant();
+}
+
+function startCurrentVariant() {
+  const variant = variantsOrder[currentVariantIndex];
+  document.getElementById("variantTitle").textContent = variant;
+  initPracticeTrial();           // ← Сначала пробное
+}
+
+function showResultsAndQuestionnaire() {
+  document.getElementById("progressRow").style.display = "none";
+  document.getElementById("taskBox").style.display = "none";
+  document.getElementById("grid").style.display = "none";
+
+  const correct = correctArr.reduce((a,b)=>a+b,0);
+  const accuracy = Math.round(correct / TOTAL * 100);
+  const avgTime = timeArr.length ? Math.round(timeArr.reduce((a,b)=>a+b,0)/timeArr.length) : 0;
+
+  document.getElementById("rCorrect").textContent = `${correct} / ${TOTAL}`;
+  document.getElementById("rAccuracy").textContent = `${accuracy}%`;
+  document.getElementById("rAvgTime").textContent = `${avgTime} мс`;
+
+  currentTestData = { variant: variantsOrder[currentVariantIndex], correct, accuracy, avgTime, correctArr, timeArr };
+
+  createQuestionnaire();
+  document.getElementById("resultsBox").style.display = "block";
+}
+
+// Остальные функции (createQuestionnaire, getQuestionnaireData, nextStep) остаются без изменений
+const questions = [ /* ... тот же массив вопросов ... */ 
+  {id: "mental", text: "Насколько сложно было думать и принимать решения?"},
+  {id: "temporal", text: "Насколько торопливо или напряжённо шла работа?"},
+  {id: "visual", text: "Насколько было зрительное напряжение?"},
+  {id: "performance", text: "Насколько успешно вы справились, на ваш взгляд?"},
+  {id: "frustration", text: "Насколько вы ощущали раздражение или неуверенность?"},
+  {id: "ease", text: "Насколько легко было найти нужную иконку среди остальных?"},
+  {id: "clutter", text: "Насколько кнопки мешали друг другу (ощущение «каши»)?", },
+  {id: "confidence", text: "Насколько уверенно вы нажимали, не боясь промахнуться?"}
+];
+
+function createQuestionnaire() {
+  const container = document.getElementById("questionsContainer");
+  container.innerHTML = questions.map(q => `
+    <div class="scale-question">
+      <label class="scale-label">${q.text}</label>
+      <input type="range" min="1" max="7" value="4" id="${q.id}" style="width:100%">
+      <div class="scale-values"><span>1</span><span>7</span></div>
+    </div>
+  `).join('');
+}
+
+function getQuestionnaireData() {
+  const data = {};
+  questions.forEach(q => data[q.id] = parseInt(document.getElementById(q.id).value));
+  return data;
+}
+
+function nextStep() {
+  const answers = getQuestionnaireData();
+  const payload = {
+    timestamp: new Date().toISOString(),
+    userId: userId,
+    screenSize: screenSize,
+    variant: currentTestData.variant,
+    correct: currentTestData.correct,
+    accuracy: currentTestData.accuracy,
+    avgTime: currentTestData.avgTime,
+    correctArr: currentTestData.correctArr,
+    timeArr: currentTestData.timeArr,
+    ...answers
+  };
+
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  currentVariantIndex++;
+  if (currentVariantIndex < 2) {
+    document.getElementById("resultsBox").style.display = "none";
+    document.getElementById("progressRow").style.display = "flex";
+    document.getElementById("taskBox").style.display = "block";
+    document.getElementById("grid").style.display = "grid";
+    startCurrentVariant();
+  } else {
+    document.getElementById("resultsBox").style.display = "none";
+    document.getElementById("finalBox").style.display = "block";
+  }
+}
+
+window.addEventListener("resize", applyGap);
+</script>
+</body>
+</html>
