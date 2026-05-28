@@ -27,6 +27,14 @@
       width: 100%; max-width: 480px; background: #fff; border: 1px solid #e0e0e0;
       border-radius: 14px; padding: 24px;
     }
+    .welcome-title {
+      font-size: 22px; font-weight: 600; color: #222; margin-bottom: 8px;
+    }
+    .info-text {
+      font-size: 15px; line-height: 1.65; color: #444; text-align: left;
+      background: #f9f9f9; padding: 18px; border-radius: 12px; margin: 20px 0;
+    }
+
     .rtest-grid {
       display: grid;
       grid-template-columns: repeat(5, auto);
@@ -49,13 +57,20 @@
       width: 70px;
       height: 70px;
     }
-    .rtest-btn i { font-size: 26px; }
+    .rtest-btn i { font-size: 40px; }
     .rtest-btn:hover { background: #f0f0f0; border-color: #ccc; }
     .rtest-btn:active { background: #e8e8e8; transform: scale(0.93); }
 
-    .scale-question { margin-bottom: 20px; }
+    .scale-question { margin-bottom: 24px; }
     .scale-label { font-size: 14.5px; line-height: 1.4; margin-bottom: 8px; }
-    .scale-values { display: flex; justify-content: space-between; font-size: 12px; color: #777; margin-top: 4px; }
+    .scale-values {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: #666;
+        margin-top: 6px;
+        line-height: 1.3;
+    }
 
     button.continue-btn {
       padding: 12px 32px; background: #333; color: #fff; border: none;
@@ -71,11 +86,22 @@
 
   <!-- Приветственный экран -->
   <div class="box show" id="welcomeBox">
-    <div style="font-size:18px;font-weight:600;color:#333;margin-bottom:16px;">Спасибо, что проходите тест!</div>
-    <div style="font-size:14px;color:#555;line-height:1.65;">
-      <p>Будет фиксироваться <strong>время ответа</strong> на каждый вопрос, поэтому просьба <strong>не отвлекаться</strong>, но отвечать в комфортном темпе.</p>
-      <p>Если вы случайно нажали не на ту кнопку — это связано только с особенностями дизайна. Тест просто запишет это как ошибку, ничего страшного.</p>
-      <p>Перед каждым вариантом будет <strong>1 пробное задание</strong>, а затем 15 основных.</p>
+    <h1 class="welcome-title">Добро пожаловать!</h1>
+
+    <div class="info-text">
+      <p>Тест полностью анонимный</p>
+      <p>Вам предстоит пройти 2 варианта интерфейса.</p>
+      <p>В каждом варианте:</p>
+      <ul style="padding-left:20px; margin:12px 0;">
+        <li>1 пробное задание (результат не учитывается)</li>
+        <li>1 основных заданий</li>
+      </ul>
+      <p>Примерная продолжительность всего теста — 7–10 минут.</p>
+    </div>
+
+    <div style="font-size:14.5px; color:#555; margin:20px 0 24px 0;">
+      Будет фиксироваться время ответа на каждый вопрос.<br>
+      Просьба <strong>не отвлекаться</strong>, но отвечать в комфортном темпе.
     </div>
     <button class="continue-btn" onclick="startTest()">Начать тест</button>
   </div>
@@ -83,7 +109,7 @@
   <!-- Основной тест -->
   <div class="progress-row" id="progressRow" style="display:none">
     <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
-    <div class="progress-label" id="progressLabel">0 / 15</div>
+    <div class="progress-label" id="progressLabel">0 / 18</div>
   </div>
 
   <div class="box task-box" id="taskBox" style="display:none">
@@ -122,7 +148,7 @@
 // ================== НАСТРОЙКИ ==================
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwM5WVUvXJA4pmg7vQ_mo2-Ov_UwaJ9qTka00eegAXROB3j2gxGaIGx8K8Qgzg76oxAGA/exec";
 
-const TOTAL = 15;
+const TOTAL = 18;
 let userId = '';
 let screenSize = '';
 let variantsOrder = [];
@@ -163,7 +189,7 @@ function applyGap() {
   const grid = document.getElementById("grid");
   const baseBtnSize = 70;
   const isDense = variantsOrder[currentVariantIndex] === 2;
-  const gap = isDense ? Math.round(baseBtnSize * 0.1) : Math.round(baseBtnSize * 1.0);
+  const gap = isDense ? Math.round(0) : Math.round(baseBtnSize * 1.0);
   
   const totalWidth = 5 * baseBtnSize + 4 * gap;
   grid.style.maxWidth = Math.min(totalWidth + 40, 720) + "px";
@@ -281,7 +307,7 @@ function startCurrentVariant() {
 }
 
 function showResultsAndQuestionnaire() {
-  document.getElementById("progressRow").style.display = "none";
+   document.getElementById("progressRow").style.display = "none";
   document.getElementById("taskBox").style.display = "none";
   document.getElementById("grid").style.display = "none";
 
@@ -289,26 +315,74 @@ function showResultsAndQuestionnaire() {
   const accuracy = Math.round(correct / TOTAL * 100);
   const avgTime = timeArr.length ? Math.round(timeArr.reduce((a,b)=>a+b,0)/timeArr.length) : 0;
 
-  document.getElementById("rCorrect").textContent = `${correct} / ${TOTAL}`;
-  document.getElementById("rAccuracy").textContent = `${accuracy}%`;
-  document.getElementById("rAvgTime").textContent = `${avgTime} мс`;
+  currentTestData = { 
+    variant: variantsOrder[currentVariantIndex], 
+    correct, 
+    accuracy, 
+    avgTime, 
+    correctArr, 
+    timeArr 
+  };
 
-  currentTestData = { variant: variantsOrder[currentVariantIndex], correct, accuracy, avgTime, correctArr, timeArr };
+  // скрываем блок с цифрами результатов
+  document.querySelector(
+    '#resultsBox > div[style*="grid-template-columns"]'
+  ).style.display = 'none';
 
   createQuestionnaire();
   document.getElementById("resultsBox").style.display = "block";
 }
 
 // Остальные функции (createQuestionnaire, getQuestionnaireData, nextStep) остаются без изменений
-const questions = [ /* ... тот же массив вопросов ... */ 
-  {id: "mental", text: "Насколько сложно было думать и принимать решения?"},
-  {id: "temporal", text: "Насколько торопливо или напряжённо шла работа?"},
-  {id: "visual", text: "Насколько было зрительное напряжение?"},
-  {id: "performance", text: "Насколько успешно вы справились, на ваш взгляд?"},
-  {id: "frustration", text: "Насколько вы ощущали раздражение или неуверенность?"},
-  {id: "ease", text: "Насколько легко было найти нужную иконку среди остальных?"},
-  {id: "clutter", text: "Насколько кнопки мешали друг другу (ощущение «каши»)?", },
-  {id: "confidence", text: "Насколько уверенно вы нажимали, не боясь промахнуться?"}
+const questions = [
+  { 
+    id: "mental", 
+    text: "Насколько сложно было думать и принимать решения?",
+    low: "Очень просто",
+    high: "Очень сложно"
+  },
+  { 
+    id: "temporal", 
+    text: "Насколько торопливо или напряжённо шла работа?",
+    low: "Совсем нет",
+    high: "Очень сильно"
+  },
+  { 
+    id: "visual", 
+    text: "Насколько было зрительное напряжение?",
+    low: "Минимальное",
+    high: "Сильное"
+  },
+  { 
+    id: "performance", 
+    text: "Насколько успешно вы справились, на ваш взгляд?",
+    low: "Плохо",
+    high: "Отлично"
+  },
+  { 
+    id: "frustration", 
+    text: "Насколько вы ощущали раздражение или неуверенность?",
+    low: "Нисколько",
+    high: "Очень сильно"
+  },
+  { 
+    id: "ease", 
+    text: "Насколько легко было найти нужную иконку среди остальных?",
+    low: "Очень легко",
+    high: "Очень сложно"
+  },
+  { 
+    id: "clutter", 
+    text: "Насколько кнопки мешали друг другу (ощущение «каши»)?",
+    low: "Совсем не мешали",
+    high: "Сильно мешали"
+  },
+  { 
+    id: "confidence", 
+    text: "Насколько уверенно вы нажимали, не боясь промахнуться?",
+    low: "Очень уверенно",
+    high: "Неуверенно"
+  }
 ];
 
 function createQuestionnaire() {
@@ -317,7 +391,10 @@ function createQuestionnaire() {
     <div class="scale-question">
       <label class="scale-label">${q.text}</label>
       <input type="range" min="1" max="7" value="4" id="${q.id}" style="width:100%">
-      <div class="scale-values"><span>1</span><span>7</span></div>
+      <div class="scale-values">
+        <span style="text-align:left; flex:1;">${q.low}</span>
+        <span style="text-align:right; flex:1;">${q.high}</span>
+      </div>
     </div>
   `).join('');
 }
