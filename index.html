@@ -57,7 +57,7 @@
       width: 70px;
       height: 70px;
     }
-    .rtest-btn i { font-size: 60px; }
+    .rtest-btn i { font-size: inherit; }
     .rtest-btn:hover { background: #f0f0f0; border-color: #ccc; }
     .rtest-btn:active { background: #e8e8e8; transform: scale(0.93); }
 
@@ -186,18 +186,30 @@ function generateUserId() {
 
 function applyGap() {
   const grid = document.getElementById("grid");
-  const baseBtnSize = 70;
-  const isDense = variantsOrder[currentVariantIndex] === 2;
-  const gap = isDense ? Math.round(0) : Math.round(baseBtnSize * 1.0);
-  
-  const totalWidth = 5 * baseBtnSize + 4 * gap;
-  grid.style.maxWidth = Math.min(totalWidth + 40, 720) + "px";
-  grid.style.gap = gap + "px";
-  grid.style.padding = (gap * 0.8) + "px";
 
-  document.querySelectorAll('.rtest-btn').forEach(btn => {
+  // 901px → 70px кнопка
+  const baseBtnSize = Math.max(
+    34,
+    Math.min(70, Math.round(window.innerHeight * 0.078))
+  );
+
+  const isDense = variantsOrder[currentVariantIndex] === 2;
+  const gap = isDense ? 0 : baseBtnSize;
+
+  const totalWidth = 5 * baseBtnSize + 4 * gap;
+
+  grid.style.maxWidth = totalWidth + "px";
+  grid.style.gap = gap + "px";
+  grid.style.padding = "0";
+
+  document.querySelectorAll(".rtest-btn").forEach(btn => {
     btn.style.width = baseBtnSize + "px";
     btn.style.height = baseBtnSize + "px";
+
+    const icon = btn.querySelector("i");
+    if (icon) {
+      icon.style.fontSize = Math.round(baseBtnSize * 0.85) + "px";
+    }
   });
 }
 
