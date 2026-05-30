@@ -187,13 +187,20 @@ function generateUserId() {
 function applyGap() {
   const grid = document.getElementById("grid");
 
-  // 901px → 70px кнопка
-  const baseBtnSize = Math.max(
-    34,
-    Math.min(70, Math.round(window.innerHeight * 0.078))
+  const referenceSize = 901; 
+  const minDimension = Math.min(
+    window.innerWidth,
+    window.innerHeight
+  );
+
+  const scale = minDimension / referenceSize;
+
+  const baseBtnSize = Math.round(
+    Math.max(34, Math.min(70, 70 * scale))
   );
 
   const isDense = variantsOrder[currentVariantIndex] === 2;
+
   const gap = isDense ? 0 : baseBtnSize;
 
   const totalWidth = 5 * baseBtnSize + 4 * gap;
